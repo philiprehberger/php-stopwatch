@@ -2,7 +2,6 @@
 
 [![Tests](https://github.com/philiprehberger/php-stopwatch/actions/workflows/tests.yml/badge.svg)](https://github.com/philiprehberger/php-stopwatch/actions/workflows/tests.yml)
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/philiprehberger/php-stopwatch.svg)](https://packagist.org/packages/philiprehberger/php-stopwatch)
-[![Total Downloads](https://img.shields.io/packagist/dt/philiprehberger/php-stopwatch.svg)](https://packagist.org/packages/philiprehberger/php-stopwatch)
 [![PHP Version Require](https://img.shields.io/packagist/php-v/philiprehberger/php-stopwatch.svg)](https://packagist.org/packages/philiprehberger/php-stopwatch)
 [![License](https://img.shields.io/github/license/philiprehberger/php-stopwatch)](LICENSE)
 
