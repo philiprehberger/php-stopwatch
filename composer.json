@@ -1,7 +1,9 @@
 {
     "name": "philiprehberger/php-stopwatch",
     "description": "Precise code execution timer with lap tracking and memory measurement",
+    "type": "library",
     "keywords": ["stopwatch", "timer", "benchmark", "performance", "profiling"],
+    "homepage": "https://github.com/philiprehberger/php-stopwatch",
     "license": "MIT",
     "authors": [
         {
@@ -29,6 +31,11 @@
     },
     "config": {
         "sort-packages": true
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit",
+        "lint": "vendor/bin/pint",
+        "analyse": "vendor/bin/phpstan analyse"
     },
     "minimum-stability": "dev",
     "prefer-stable": true
