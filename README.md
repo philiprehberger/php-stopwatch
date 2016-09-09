@@ -2,7 +2,6 @@
 
 [![Tests](https://github.com/philiprehberger/php-stopwatch/actions/workflows/tests.yml/badge.svg)](https://github.com/philiprehberger/php-stopwatch/actions/workflows/tests.yml)
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/philiprehberger/php-stopwatch.svg)](https://packagist.org/packages/philiprehberger/php-stopwatch)
-[![PHP Version Require](https://img.shields.io/packagist/php-v/philiprehberger/php-stopwatch.svg)](https://packagist.org/packages/philiprehberger/php-stopwatch)
 [![License](https://img.shields.io/github/license/philiprehberger/php-stopwatch)](LICENSE)
 
 Precise code execution timer with lap tracking and memory measurement.
@@ -125,33 +124,15 @@ $result = $sw->stop();
 
 ---
 
-## Testing
+## Development
 
 ```bash
 composer install
 vendor/bin/phpunit
-```
-
-Code style:
-
-```bash
-vendor/bin/pint
-```
-
-Static analysis:
-
-```bash
+vendor/bin/pint --test
 vendor/bin/phpstan analyse
 ```
 
----
-
-## Changelog
-
-Please see [CHANGELOG.md](CHANGELOG.md) for recent changes.
-
----
-
 ## License
 
-The MIT License (MIT). Please see [LICENSE](LICENSE) for more information.
+MIT
