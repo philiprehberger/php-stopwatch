@@ -6,7 +6,6 @@
 
 Precise code execution timer with lap tracking and memory measurement.
 
----
 
 ## Requirements
 
@@ -16,7 +15,6 @@ Precise code execution timer with lap tracking and memory measurement.
 
 No external dependencies required.
 
----
 
 ## Installation
 
@@ -24,7 +22,6 @@ No external dependencies required.
 composer require philiprehberger/php-stopwatch
 ```
 
----
 
 ## Usage
 
@@ -118,7 +115,6 @@ $result = $sw->stop();
 echo $result->durationFormatted; // Excludes time spent paused
 ```
 
----
 
 ## API
 
@@ -145,7 +141,6 @@ echo $result->durationFormatted; // Excludes time spent paused
 
 **Lap** — `name` (?string), `duration` (float, ms), `cumulativeDuration` (float, ms)
 
----
 
 ## Development
 
