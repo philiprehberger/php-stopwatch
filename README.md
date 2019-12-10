@@ -9,12 +9,7 @@ Precise code execution timer with lap tracking and memory measurement.
 
 ## Requirements
 
-| Dependency | Version |
-|------------|---------|
-| PHP        | ^8.2    |
-
-No external dependencies required.
-
+- PHP 8.2+
 
 ## Installation
 
