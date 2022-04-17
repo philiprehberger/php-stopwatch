@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Nested stopwatches via `RunningStopwatch::child()` for hierarchical timing
+- `Stopwatch::benchmark()` for comparing performance of multiple callables
+- `StopwatchResult::stats()` for statistical analysis (mean, median, percentiles, std deviation)
+
 ## [1.1.2] - 2026-03-23
 
 ### Changed

@@ -23,6 +23,7 @@ final readonly class StopwatchResult
      * Create a new StopwatchResult instance.
      *
      * @param  array<Lap>  $laps
+     * @param  array<StopwatchResult>  $children
      */
     public function __construct(
         public float $duration,
@@ -30,9 +31,34 @@ final readonly class StopwatchResult
         public int $peakMemory,
         public array $laps = [],
         public ?string $name = null,
+        public array $children = [],
     ) {
         $this->durationFormatted = Formatter::formatDuration($this->duration);
         $this->memoryFormatted = Formatter::formatBytes($this->memory);
+    }
+
+    /**
+     * Get the child stopwatch results.
+     *
+     * @return array<StopwatchResult>
+     */
+    public function children(): array
+    {
+        return $this->children;
+    }
+
+    /**
+     * Get statistical analysis of lap durations (or total duration if no laps).
+     */
+    public function stats(): StopwatchStats
+    {
+        if ($this->laps !== []) {
+            $durations = array_map(fn (Lap $lap): float => $lap->duration, $this->laps);
+        } else {
+            $durations = [$this->duration];
+        }
+
+        return new StopwatchStats($durations);
     }
 
     /**
@@ -63,6 +89,20 @@ final readonly class StopwatchResult
                     $lapName,
                     Formatter::formatDuration($lap->duration),
                     Formatter::formatDuration($lap->cumulativeDuration),
+                );
+            }
+        }
+
+        if ($this->children !== []) {
+            $lines[] = '';
+            $lines[] = 'Children:';
+
+            foreach ($this->children as $child) {
+                $childName = $child->name ?? 'unnamed';
+                $lines[] = sprintf(
+                    '  %s — %s',
+                    $childName,
+                    $child->durationFormatted,
                 );
             }
         }
