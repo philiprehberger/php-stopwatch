@@ -139,6 +139,71 @@ echo $result->report();
 // #1 — mean: 0.15ms | median: 0.14ms | min: 0.11ms | max: 0.30ms (100 iterations)
 ```
 
+### Threshold alerts
+
+```php
+// Fire a callback when measurement exceeds a threshold
+$result = Stopwatch::measureWithThreshold(
+    callback: function () {
+        processLargeDataset();
+    },
+    thresholdMs: 500.0,
+    onExceeded: function (MeasureResult $result) {
+        Log::warning("Slow operation: {$result->durationFormatted}");
+    },
+);
+
+// Register thresholds on a running stopwatch
+$sw = Stopwatch::start();
+$sw->onThreshold(1000.0, function (StopwatchResult $result) {
+    alert("Operation exceeded 1 second: {$result->durationFormatted}");
+});
+$sw->onThreshold(5000.0, function (StopwatchResult $result) {
+    alert("Critical: operation exceeded 5 seconds!");
+});
+doWork();
+$result = $sw->stop(); // Callbacks fire here if thresholds exceeded
+```
+
+### Comparison reports
+
+```php
+$report = Stopwatch::compare([
+    'array_map' => fn () => array_map(fn ($x) => $x * 2, range(1, 1000)),
+    'foreach' => fn () => array_walk($arr = range(1, 1000), fn (&$x) => $x *= 2),
+], iterations: 100);
+
+echo $report->toTable();
+// | Name      | Mean    | Median  | Δ vs Best  |
+// |-----------|---------|---------|------------|
+// | array_map | 0.12ms  | 0.11ms  | baseline   |
+// | foreach   | 0.18ms  | 0.17ms  | +50.00%    |
+
+$report->fastest(); // BenchmarkEntry with lowest mean
+$report->slowest(); // BenchmarkEntry with highest mean
+$report->rankings(); // Sorted by mean ascending
+```
+
+### Profiling decorator
+
+```php
+$proxy = Stopwatch::profile($myService);
+
+// Use the proxy like the original object — all calls are timed
+$proxy->fetchUsers();
+$proxy->fetchUsers();
+$proxy->processData($input);
+
+$profile = Stopwatch::getProfile($proxy);
+// ['fetchUsers' => StopwatchStats, 'processData' => StopwatchStats]
+
+foreach ($profile as $method => $stats) {
+    echo "{$method}: mean={$stats->mean()}ms, calls={$stats->min()}..{$stats->max()}ms\n";
+}
+
+$original = $proxy->getTarget(); // Access the wrapped object
+```
+
 ### Statistical analysis
 
 ```php
@@ -163,6 +228,11 @@ echo $stats->standardDeviation(); // Standard deviation
 | `Stopwatch::measure(callable $fn)` | `MeasureResult` | Measure execution time and memory of a callable |
 | `Stopwatch::measureWithResult(callable $fn)` | `array{result, measure}` | Measure while preserving the return value |
 | `Stopwatch::benchmark(array $callables, int $iterations)` | `BenchmarkResult` | Run each callable N times and compare performance |
+| `Stopwatch::measureWithThreshold(callable, float, callable)` | `MeasureResult` | Measure and fire callback if threshold exceeded |
+| `Stopwatch::compare(array $benchmarks, int $iterations)` | `ComparisonReport` | Compare named callables with rankings and ASCII table |
+| `Stopwatch::profile(object $target)` | `ProfilingProxy` | Create a profiling proxy for automatic method timing |
+| `Stopwatch::getProfile(ProfilingProxy $proxy)` | `array<string, StopwatchStats>` | Get profiling data from a proxy |
+| `RunningStopwatch->onThreshold(float $ms, callable)` | `self` | Register threshold callback fired on stop() |
 | `RunningStopwatch->lap(?string $name)` | `self` | Record a lap with an optional name |
 | `RunningStopwatch->child(string $name)` | `RunningStopwatch` | Create a nested child stopwatch |
 | `RunningStopwatch->stop()` | `StopwatchResult` | Stop the timer and return results |
@@ -189,6 +259,12 @@ echo $stats->standardDeviation(); // Standard deviation
 **BenchmarkEntry** — `mean` (float, ms), `median` (float, ms), `min` (float, ms), `max` (float, ms), `iterations` (int)
 
 **StopwatchStats** — `mean()`, `median()`, `min()`, `max()`, `p95()`, `p99()`, `standardDeviation()` (all float, ms)
+
+**ComparisonReport** — `toTable()` (string), `fastest()` (BenchmarkEntry), `slowest()` (BenchmarkEntry), `rankings()` (array), `toArray()` (array)
+
+**ThresholdMonitor** — `addThreshold(float $ms, callable)` (self), `check(StopwatchResult|MeasureResult)` (void)
+
+**ProfilingProxy** — `getProfile()` (array of StopwatchStats), `getTarget()` (object), `getRawProfile()` (array)
 
 ## Development
 
