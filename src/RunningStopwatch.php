@@ -19,6 +19,12 @@ final class RunningStopwatch
 
     private bool $running = true;
 
+    private bool $paused = false;
+
+    private float $pausedAt = 0.0;
+
+    private float $accumulatedPauseTime = 0.0;
+
     /** @var array<Lap> */
     private array $laps = [];
 
@@ -44,10 +50,11 @@ final class RunningStopwatch
     public function lap(?string $name = null): self
     {
         $this->ensureRunning();
+        $this->ensureNotPaused();
 
         $now = hrtime(true) / 1e6;
-        $lapDuration = $now - $this->lastLapTime;
-        $cumulativeDuration = $now - $this->startTime;
+        $lapDuration = ($now - $this->lastLapTime) - $this->accumulatedPauseTime;
+        $cumulativeDuration = ($now - $this->startTime) - $this->accumulatedPauseTime;
 
         $this->laps[] = new Lap(
             name: $name,
@@ -61,6 +68,57 @@ final class RunningStopwatch
     }
 
     /**
+     * Pause the stopwatch without stopping it.
+     *
+     * @throws LogicException If the stopwatch has been stopped or is already paused.
+     */
+    public function pause(): void
+    {
+        $this->ensureRunning();
+
+        if ($this->paused) {
+            throw new LogicException('Stopwatch is already paused.');
+        }
+
+        $this->paused = true;
+        $this->pausedAt = hrtime(true) / 1e6;
+    }
+
+    /**
+     * Resume the stopwatch after being paused.
+     *
+     * @throws LogicException If the stopwatch has been stopped or is not paused.
+     */
+    public function resume(): void
+    {
+        $this->ensureRunning();
+
+        if (! $this->paused) {
+            throw new LogicException('Stopwatch is not paused.');
+        }
+
+        $this->accumulatedPauseTime += (hrtime(true) / 1e6) - $this->pausedAt;
+        $this->paused = false;
+    }
+
+    /**
+     * Get the elapsed time in seconds without stopping the stopwatch.
+     */
+    public function getElapsedSoFar(): float
+    {
+        $this->ensureRunning();
+
+        $now = hrtime(true) / 1e6;
+        $pauseAdjustment = $this->accumulatedPauseTime;
+
+        if ($this->paused) {
+            $pauseAdjustment += $now - $this->pausedAt;
+        }
+
+        return ($now - $this->startTime - $pauseAdjustment) / 1000;
+    }
+
+    /**
      * Stop the stopwatch and return the result.
      *
      * @throws LogicException If the stopwatch has already been stopped.
@@ -69,6 +127,10 @@ final class RunningStopwatch
     {
         $this->ensureRunning();
 
+        if ($this->paused) {
+            $this->resume();
+        }
+
         $endTime = hrtime(true) / 1e6;
         $endMemory = memory_get_usage();
         $endPeakMemory = memory_get_peak_usage();
@@ -76,7 +138,7 @@ final class RunningStopwatch
         $this->running = false;
 
         return new StopwatchResult(
-            duration: $endTime - $this->startTime,
+            duration: $endTime - $this->startTime - $this->accumulatedPauseTime,
             memory: $endMemory - $this->startMemory,
             peakMemory: $endPeakMemory - $this->startPeakMemory,
             laps: $this->laps,
@@ -91,7 +153,14 @@ final class RunningStopwatch
     {
         $this->ensureRunning();
 
-        return (hrtime(true) / 1e6) - $this->startTime;
+        $now = hrtime(true) / 1e6;
+        $pauseAdjustment = $this->accumulatedPauseTime;
+
+        if ($this->paused) {
+            $pauseAdjustment += $now - $this->pausedAt;
+        }
+
+        return $now - $this->startTime - $pauseAdjustment;
     }
 
     /**
@@ -103,6 +172,14 @@ final class RunningStopwatch
     }
 
     /**
+     * Check whether the stopwatch is currently paused.
+     */
+    public function isPaused(): bool
+    {
+        return $this->paused;
+    }
+
+    /**
      * Ensure the stopwatch is still running.
      *
      * @throws LogicException If the stopwatch has been stopped.
@@ -111,6 +188,18 @@ final class RunningStopwatch
     {
         if (! $this->running) {
             throw new LogicException('Stopwatch has already been stopped.');
+        }
+    }
+
+    /**
+     * Ensure the stopwatch is not paused.
+     *
+     * @throws LogicException If the stopwatch is paused.
+     */
+    private function ensureNotPaused(): void
+    {
+        if ($this->paused) {
+            throw new LogicException('Stopwatch is paused.');
         }
     }
 }

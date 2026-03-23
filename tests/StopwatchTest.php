@@ -168,4 +168,98 @@ final class StopwatchTest extends TestCase
         $this->assertNotEmpty($result->durationFormatted);
         $this->assertNotEmpty($result->memoryFormatted);
     }
+
+    public function test_pause_and_resume_excludes_paused_time(): void
+    {
+        $sw = Stopwatch::start();
+        usleep(10_000); // 10ms active
+
+        $sw->pause();
+        usleep(50_000); // 50ms paused — should not be counted
+        $sw->resume();
+
+        usleep(10_000); // 10ms active
+        $result = $sw->stop();
+
+        // Total active time ~20ms, paused ~50ms was excluded
+        // Duration should be well under 50ms (the paused portion)
+        $this->assertLessThan(45.0, $result->duration);
+        $this->assertGreaterThan(5.0, $result->duration);
+    }
+
+    public function test_get_elapsed_so_far_returns_seconds_while_running(): void
+    {
+        $sw = Stopwatch::start();
+        usleep(20_000); // 20ms
+
+        $elapsed = $sw->getElapsedSoFar();
+
+        $this->assertGreaterThan(0.0, $elapsed);
+        // Should be in seconds (20ms = ~0.02s), not milliseconds
+        $this->assertLessThan(1.0, $elapsed);
+        $this->assertTrue($sw->isRunning());
+
+        $sw->stop();
+    }
+
+    public function test_get_elapsed_so_far_excludes_paused_time(): void
+    {
+        $sw = Stopwatch::start();
+        usleep(10_000); // 10ms active
+
+        $sw->pause();
+        usleep(50_000); // 50ms paused
+        $elapsed = $sw->getElapsedSoFar();
+        $sw->resume();
+
+        // Elapsed should reflect ~10ms active, not the 50ms pause
+        $this->assertLessThan(0.045, $elapsed);
+
+        $sw->stop();
+    }
+
+    public function test_resume_without_pause_throws_logic_exception(): void
+    {
+        $sw = Stopwatch::start();
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Stopwatch is not paused.');
+        $sw->resume();
+    }
+
+    public function test_pause_while_already_paused_throws_logic_exception(): void
+    {
+        $sw = Stopwatch::start();
+        $sw->pause();
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Stopwatch is already paused.');
+        $sw->pause();
+    }
+
+    public function test_is_paused_reflects_pause_state(): void
+    {
+        $sw = Stopwatch::start();
+        $this->assertFalse($sw->isPaused());
+
+        $sw->pause();
+        $this->assertTrue($sw->isPaused());
+
+        $sw->resume();
+        $this->assertFalse($sw->isPaused());
+
+        $sw->stop();
+    }
+
+    public function test_stop_while_paused_auto_resumes(): void
+    {
+        $sw = Stopwatch::start();
+        usleep(10_000);
+        $sw->pause();
+        usleep(50_000); // paused time — should be excluded
+        $result = $sw->stop();
+
+        $this->assertLessThan(45.0, $result->duration);
+        $this->assertFalse($sw->isRunning());
+    }
 }

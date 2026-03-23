@@ -99,6 +99,25 @@ if ($sw->elapsed() > 5000) {
 $result = $sw->stop();
 ```
 
+### Pause and resume
+
+```php
+$sw = Stopwatch::start();
+
+$data = fetchFromApi();
+$sw->pause();  // Pause while waiting for user input
+
+$input = readline('Continue? ');
+
+$sw->resume(); // Resume timing
+processData($data, $input);
+
+echo $sw->getElapsedSoFar() . 's elapsed so far';
+
+$result = $sw->stop();
+echo $result->durationFormatted; // Excludes time spent paused
+```
+
 ---
 
 ## API
@@ -110,8 +129,12 @@ $result = $sw->stop();
 | `Stopwatch::measureWithResult(callable $fn)` | `array{result, measure}` | Measure while preserving the return value |
 | `RunningStopwatch->lap(?string $name)` | `self` | Record a lap with an optional name |
 | `RunningStopwatch->stop()` | `StopwatchResult` | Stop the timer and return results |
+| `RunningStopwatch->pause()` | `void` | Pause timing without stopping the stopwatch |
+| `RunningStopwatch->resume()` | `void` | Resume timing after a pause |
+| `RunningStopwatch->getElapsedSoFar()` | `float` | Get elapsed seconds without stopping |
 | `RunningStopwatch->elapsed()` | `float` | Get elapsed milliseconds while still running |
 | `RunningStopwatch->isRunning()` | `bool` | Check if the stopwatch is still active |
+| `RunningStopwatch->isPaused()` | `bool` | Check if the stopwatch is currently paused |
 | `StopwatchResult->report()` | `string` | Generate a formatted report with all laps |
 
 ### Value Objects

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-03-22
+
+### Added
+- `pause()` and `resume()` methods on `RunningStopwatch` for pausing without stopping
+- `getElapsedSoFar()` method to read elapsed time without stopping the stopwatch
+
 ## [1.0.4] - 2026-03-20
 
 ### Added
