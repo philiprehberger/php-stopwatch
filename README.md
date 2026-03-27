@@ -3,6 +3,7 @@
 [![Tests](https://github.com/philiprehberger/php-stopwatch/actions/workflows/tests.yml/badge.svg)](https://github.com/philiprehberger/php-stopwatch/actions/workflows/tests.yml)
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/philiprehberger/php-stopwatch.svg)](https://packagist.org/packages/philiprehberger/php-stopwatch)
 [![License](https://img.shields.io/github/license/philiprehberger/php-stopwatch)](LICENSE)
+[![Sponsor](https://img.shields.io/badge/sponsor-GitHub%20Sponsors-ec6cb9)](https://github.com/sponsors/philiprehberger)
 
 Precise code execution timer with lap tracking and memory measurement.
 
