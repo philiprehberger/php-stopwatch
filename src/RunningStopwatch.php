@@ -19,6 +19,8 @@ final class RunningStopwatch
 
     private bool $running = true;
 
+    private ?StopwatchResult $lastResult = null;
+
     private bool $paused = false;
 
     private float $pausedAt = 0.0;
@@ -27,6 +29,9 @@ final class RunningStopwatch
 
     /** @var array<Lap> */
     private array $laps = [];
+
+    /** @var array<RunningStopwatch> */
+    private array $children = [];
 
     private float $lastLapTime;
 
@@ -42,6 +47,20 @@ final class RunningStopwatch
         $this->startMemory = memory_get_usage();
         $this->startPeakMemory = memory_get_peak_usage();
         $this->lastLapTime = $this->startTime;
+    }
+
+    /**
+     * Create a child stopwatch for nested timing.
+     */
+    public function child(string $name): self
+    {
+        $this->ensureRunning();
+        $this->ensureNotPaused();
+
+        $child = new self($name);
+        $this->children[] = $child;
+
+        return $child;
     }
 
     /**
@@ -137,13 +156,26 @@ final class RunningStopwatch
 
         $this->running = false;
 
-        return new StopwatchResult(
+        $childResults = [];
+
+        foreach ($this->children as $child) {
+            if ($child->isRunning()) {
+                $childResults[] = $child->stop();
+            } else {
+                $childResults[] = $child->lastResult;
+            }
+        }
+
+        $this->lastResult = new StopwatchResult(
             duration: $endTime - $this->startTime - $this->accumulatedPauseTime,
             memory: $endMemory - $this->startMemory,
             peakMemory: $endPeakMemory - $this->startPeakMemory,
             laps: $this->laps,
             name: $this->name,
+            children: $childResults,
         );
+
+        return $this->lastResult;
     }
 
     /**

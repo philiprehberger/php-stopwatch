@@ -1,12 +1,15 @@
 # PHP Stopwatch
 
-[![Tests](https://github.com/philiprehberger/php-stopwatch/actions/workflows/tests.yml/badge.svg)](https://github.com/philiprehberger/php-stopwatch/actions/workflows/tests.yml)
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/philiprehberger/php-stopwatch.svg)](https://packagist.org/packages/philiprehberger/php-stopwatch)
+[![CI](https://github.com/philiprehberger/php-stopwatch/actions/workflows/tests.yml/badge.svg)](https://github.com/philiprehberger/php-stopwatch/actions/workflows/tests.yml)
+[![Packagist Version](https://img.shields.io/packagist/v/philiprehberger/php-stopwatch)](https://packagist.org/packages/philiprehberger/php-stopwatch)
+[![GitHub Release](https://img.shields.io/github/v/release/philiprehberger/php-stopwatch)](https://github.com/philiprehberger/php-stopwatch/releases)
+[![Last Updated](https://img.shields.io/github/last-commit/philiprehberger/php-stopwatch)](https://github.com/philiprehberger/php-stopwatch/commits/main)
 [![License](https://img.shields.io/github/license/philiprehberger/php-stopwatch)](LICENSE)
+[![Bug Reports](https://img.shields.io/github/issues/philiprehberger/php-stopwatch/bug)](https://github.com/philiprehberger/php-stopwatch/issues?q=is%3Aissue+is%3Aopen+label%3Abug)
+[![Feature Requests](https://img.shields.io/github/issues/philiprehberger/php-stopwatch/enhancement)](https://github.com/philiprehberger/php-stopwatch/issues?q=is%3Aissue+is%3Aopen+label%3Aenhancement)
 [![Sponsor](https://img.shields.io/badge/sponsor-GitHub%20Sponsors-ec6cb9)](https://github.com/sponsors/philiprehberger)
 
 Precise code execution timer with lap tracking and memory measurement.
-
 
 ## Requirements
 
@@ -17,7 +20,6 @@ Precise code execution timer with lap tracking and memory measurement.
 ```bash
 composer require philiprehberger/php-stopwatch
 ```
-
 
 ## Usage
 
@@ -111,6 +113,52 @@ $result = $sw->stop();
 echo $result->durationFormatted; // Excludes time spent paused
 ```
 
+### Nested stopwatches
+
+```php
+$sw = Stopwatch::start('parent');
+
+$child = $sw->child('database');
+// ... database queries ...
+$childResult = $child->stop();
+
+$result = $sw->stop();
+
+foreach ($result->children() as $child) {
+    echo $child->name . ': ' . $child->durationFormatted;
+}
+```
+
+### Benchmark comparisons
+
+```php
+$result = Stopwatch::benchmark([
+    fn () => array_map(fn ($x) => $x * 2, range(1, 1000)),
+    fn () => array_walk($arr = range(1, 1000), fn (&$x) => $x *= 2),
+], iterations: 100);
+
+echo $result->report();
+// Benchmark Results
+// ------------------
+// #0 — mean: 0.12ms | median: 0.11ms | min: 0.09ms | max: 0.25ms (100 iterations)
+// #1 — mean: 0.15ms | median: 0.14ms | min: 0.11ms | max: 0.30ms (100 iterations)
+```
+
+### Statistical analysis
+
+```php
+$sw = Stopwatch::start();
+$sw->lap('step-1');
+$sw->lap('step-2');
+$sw->lap('step-3');
+$result = $sw->stop();
+
+$stats = $result->stats();
+echo $stats->mean();              // Mean lap duration in ms
+echo $stats->median();            // Median lap duration in ms
+echo $stats->p95();               // 95th percentile
+echo $stats->standardDeviation(); // Standard deviation
+```
 
 ## API
 
@@ -119,7 +167,9 @@ echo $result->durationFormatted; // Excludes time spent paused
 | `Stopwatch::start(?string $name)` | `RunningStopwatch` | Start a new stopwatch with an optional name |
 | `Stopwatch::measure(callable $fn)` | `MeasureResult` | Measure execution time and memory of a callable |
 | `Stopwatch::measureWithResult(callable $fn)` | `array{result, measure}` | Measure while preserving the return value |
+| `Stopwatch::benchmark(array $callables, int $iterations)` | `BenchmarkResult` | Run each callable N times and compare performance |
 | `RunningStopwatch->lap(?string $name)` | `self` | Record a lap with an optional name |
+| `RunningStopwatch->child(string $name)` | `RunningStopwatch` | Create a nested child stopwatch |
 | `RunningStopwatch->stop()` | `StopwatchResult` | Stop the timer and return results |
 | `RunningStopwatch->pause()` | `void` | Pause timing without stopping the stopwatch |
 | `RunningStopwatch->resume()` | `void` | Resume timing after a pause |
@@ -128,15 +178,22 @@ echo $result->durationFormatted; // Excludes time spent paused
 | `RunningStopwatch->isRunning()` | `bool` | Check if the stopwatch is still active |
 | `RunningStopwatch->isPaused()` | `bool` | Check if the stopwatch is currently paused |
 | `StopwatchResult->report()` | `string` | Generate a formatted report with all laps |
+| `StopwatchResult->children()` | `array<StopwatchResult>` | Get child stopwatch results |
+| `StopwatchResult->stats()` | `StopwatchStats` | Get statistical analysis of lap durations |
 
 ### Value Objects
 
-**StopwatchResult** — `duration` (float, ms), `durationFormatted` (string), `memory` (int, bytes), `memoryFormatted` (string), `peakMemory` (int, bytes), `laps` (array), `name` (?string)
+**StopwatchResult** — `duration` (float, ms), `durationFormatted` (string), `memory` (int, bytes), `memoryFormatted` (string), `peakMemory` (int, bytes), `laps` (array), `name` (?string), `children` (array)
 
 **MeasureResult** — `duration` (float, ms), `durationFormatted` (string), `memory` (int, bytes), `memoryFormatted` (string)
 
 **Lap** — `name` (?string), `duration` (float, ms), `cumulativeDuration` (float, ms)
 
+**BenchmarkResult** — `results()` (array of BenchmarkEntry), `report()` (string)
+
+**BenchmarkEntry** — `mean` (float, ms), `median` (float, ms), `min` (float, ms), `max` (float, ms), `iterations` (int)
+
+**StopwatchStats** — `mean()`, `median()`, `min()`, `max()`, `p95()`, `p99()`, `standardDeviation()` (all float, ms)
 
 ## Development
 
@@ -144,9 +201,15 @@ echo $result->durationFormatted; // Excludes time spent paused
 composer install
 vendor/bin/phpunit
 vendor/bin/pint --test
-vendor/bin/phpstan analyse
 ```
+
+## Support
+
+If you find this package useful, consider giving it a star on GitHub — it helps motivate continued maintenance and development.
+
+[![LinkedIn](https://img.shields.io/badge/Philip%20Rehberger-LinkedIn-0A66C2?logo=linkedin)](https://www.linkedin.com/in/philiprehberger)
+[![More packages](https://img.shields.io/badge/more-open%20source%20packages-blue)](https://philiprehberger.com/open-source-packages)
 
 ## License
 
-MIT
+[MIT](LICENSE)
