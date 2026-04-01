@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-04-01
+
+### Added
+- Threshold alerts via `onThreshold()` and `measureWithThreshold()`
+- Comparison reports via `Stopwatch::compare()` with ASCII table output
+- Profiling decorator via `Stopwatch::profile()` for automatic method timing
+
 ## [1.2.1] - 2026-03-31
 
 ### Changed

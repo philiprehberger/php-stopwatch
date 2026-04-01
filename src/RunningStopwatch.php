@@ -33,6 +33,8 @@ final class RunningStopwatch
     /** @var array<RunningStopwatch> */
     private array $children = [];
 
+    private ?ThresholdMonitor $thresholdMonitor = null;
+
     private float $lastLapTime;
 
     /**
@@ -47,6 +49,25 @@ final class RunningStopwatch
         $this->startMemory = memory_get_usage();
         $this->startPeakMemory = memory_get_peak_usage();
         $this->lastLapTime = $this->startTime;
+    }
+
+    /**
+     * Register a threshold callback that fires when stop() is called and duration exceeds the given milliseconds.
+     *
+     * @param  float  $ms  Threshold in milliseconds
+     * @param  callable  $callback  Receives the StopwatchResult when threshold is exceeded
+     */
+    public function onThreshold(float $ms, callable $callback): self
+    {
+        $this->ensureRunning();
+
+        if ($this->thresholdMonitor === null) {
+            $this->thresholdMonitor = new ThresholdMonitor;
+        }
+
+        $this->thresholdMonitor->addThreshold($ms, $callback);
+
+        return $this;
     }
 
     /**
@@ -174,6 +195,10 @@ final class RunningStopwatch
             name: $this->name,
             children: $childResults,
         );
+
+        if ($this->thresholdMonitor !== null) {
+            $this->thresholdMonitor->check($this->lastResult);
+        }
 
         return $this->lastResult;
     }
